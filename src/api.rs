@@ -2,18 +2,25 @@ use std::fmt::Display;
 
 use chrono::Utc;
 
-/// Build the url for the api access based on the requested parameter and today's date.
-pub fn url(param: Parameter) -> String {
-    let date = Utc::now().date_naive().format("%Y%m%d");
+/// Build the url for the api access based on the requested parameter and date.
+pub fn url(param: Parameter, date: chrono::DateTime<Utc>) -> String {
+    let date = date.date_naive().format("%Y%m%d");
     format!(
-        "https://data.geo.admin.ch/api/stac/v0.9/collections/ch.meteoschweiz.ogd-local-forecasting/items/{date:08}-ch/assets/vnut12.lssw.{date:08}0100.{param}.csv"
+        "https://data.geo.admin.ch/api/stac/v0.9/collections/ch.meteoschweiz.ogd-local-forecasting/items/{date:08}-ch/assets/vnut12.lssw.{date:08}0100.{}.csv",
+        param.api_key(),
     )
+}
+
+/// Build the url for the api access based on the requested parameter and date.
+pub fn url_today(param: Parameter) -> String {
+    url(param, Utc::now())
 }
 
 /// Meteoroligical Data Parameters provided by the MeteoSwiss API
 ///
 /// TP is short for 10th Percentile
 /// NP is short for 90th Percentile.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Parameter {
     MeanWindDirectionHourly,
     MeanWindSpeedScalarHourly,
@@ -28,7 +35,7 @@ pub enum Parameter {
     LowCloudCover,
     MediumCloudCover,
     MeanDiffuseRadiationHourly,
-    ProbabilityPercipitationThreeHours,
+    ProbabilityPrecipitationThreeHours,
     TotalPrecipitationThreeHours,
     TotalPrecipitationHourly,
     TPTotalPrecipitationHourly,
@@ -49,10 +56,10 @@ pub enum Parameter {
     MaxAirTemperatureDailyLocal,
 }
 
-impl Display for Parameter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Parameter {
+    fn api_key(self) -> &'static str {
         use Parameter as P;
-        let param_key = match *self {
+        match self {
             P::MeanWindDirectionHourly => "dkl010h0",
             P::MeanWindSpeedScalarHourly => "fu3010h0",
             P::MaxGustPeakHourly => "fu3010h1",
@@ -65,7 +72,7 @@ impl Display for Parameter {
             P::LowCloudCover => "nprolohs",
             P::MediumCloudCover => "npromths",
             P::MeanDiffuseRadiationHourly => "ods000h0",
-            P::ProbabilityPercipitationThreeHours => "rp0003i0",
+            P::ProbabilityPrecipitationThreeHours => "rp0003i0",
             P::TotalPrecipitationThreeHours => "rre003i0",
             P::TotalPrecipitationHourly => "rre150h0",
             P::TPTotalPrecipitationHourly => "rreq10h0",
@@ -83,7 +90,6 @@ impl Display for Parameter {
             P::MaxAirTemperatureDailyUTC => "tre200dx",
             P::MinAirTemperatureDailyLocal => "tre200pn",
             P::MaxAirTemperatureDailyLocal => "tre200px",
-        };
-        f.write_str(param_key)
+        }
     }
 }
