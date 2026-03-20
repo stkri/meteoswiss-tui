@@ -1,13 +1,11 @@
-use std::fmt::Display;
-
 use chrono::Utc;
 
 /// Build the url for the api access based on the requested parameter and date.
 pub fn url(param: Parameter, date: chrono::DateTime<Utc>) -> String {
     let date = date.date_naive().format("%Y%m%d");
     format!(
-        "https://data.geo.admin.ch/api/stac/v0.9/collections/ch.meteoschweiz.ogd-local-forecasting/items/{date:08}-ch/assets/vnut12.lssw.{date:08}0100.{}.csv",
-        param.api_key(),
+        "https://data.geo.admin.ch/ch.meteoschweiz.ogd-local-forecasting/{date}-ch/vnut12.lssw.{date}0100.{param}.csv",
+        param = param.api_key(),
     )
 }
 
@@ -30,7 +28,6 @@ pub enum Parameter {
     NPMeanWindSpeedHourly,
     NPMaxGustPeakHourly,
     MeanGlobalRadiationHourly,
-    // Meteoswiss Icon not provided to comply with copyright
     HighCloudCover,
     LowCloudCover,
     MediumCloudCover,
@@ -45,7 +42,6 @@ pub enum Parameter {
     TPMeanAirTemperatureHourly,
     NPMeanAirTemperatureHourly,
     ZeroDegreeLevelHourly,
-    // MeteoSwiss Icon not provided to comply with copyright
     TotalPrecipitationDailyUTC,
     TotalPrecipitationDailyLocal,
     TPTotalPrecipitationDailyLocal,
