@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
 
     let _ = body_lines_iter.next();
 
-    let new_csv = dbg!(format!("location;location_type;date;value\n{}", body_lines_iter.collect::<String>()).replace("\n", "\n"));
+    let new_csv = format!("location;location_type;date;value;{}", body_lines_iter.collect::<String>()).replace("\n", "\n");
 
     let mut csv_reader =
         csv::ReaderBuilder::new().delimiter(b';').from_reader(new_csv.as_bytes());
