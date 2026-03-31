@@ -4,8 +4,8 @@ use color_eyre::eyre::WrapErr;
 use color_eyre::{Result, Section};
 mod api;
 mod weather_data;
+use encoding_rs::WINDOWS_1252;
 use weather_data::WeatherDataEntry;
-
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,18 +23,30 @@ async fn main() -> Result<()> {
 
     let mut body = res.text().await.wrap_err("Failed to get body")?;
 
-    let mut body_lines_iter = body.as_str().lines();
+    let (cow, _, _) = WINDOWS_1252.decode(body.as_bytes());
 
+    let body = cow.into_owned();
+
+    let mut body_lines_iter = body.lines();
     let _ = body_lines_iter.next();
+    let body = dbg!(
+        body_lines_iter
+            .map(|s| format!("{s}\n"))
+            .collect::<String>()
+    );
 
-    let new_csv = format!("location;location_type;date;value;{}", body_lines_iter.collect::<String>()).replace("\n", "\n");
+    let mut csv_reader = csv::ReaderBuilder::new()
+        .delimiter(b';')
+        .has_headers(false)
+        .from_reader(body.as_bytes());
 
-    let mut csv_reader =
-        csv::ReaderBuilder::new().delimiter(b';').from_reader(new_csv.as_bytes());
-
-    for entry in csv_reader.deserialize::<WeatherDataEntry>(){
+    for entry in csv_reader.deserialize::<WeatherDataEntry>() {
         let entry_vals = entry.wrap_err("Failed to parse CSV data")?;
-        println!("Max Temp for location {id}: {t} °C", id = entry_vals.location, t = entry_vals.value);
+        println!(
+            "Max Temp for location {id}: {t} °C",
+            id = entry_vals.location,
+            t = entry_vals.value
+        );
     }
 
     Ok(())

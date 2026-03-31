@@ -771,6 +771,7 @@ dependencies = [
  "chrono",
  "color-eyre",
  "csv",
+ "encoding_rs",
  "reqwest",
  "serde",
  "serde_json",
