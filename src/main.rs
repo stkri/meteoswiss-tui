@@ -19,9 +19,7 @@ async fn main() -> Result<()> {
         .wrap_err("Failed to access MeteoSwiss API")
         .suggestion("Check your internet connection")?;
 
-    println!("{res:#?}");
-
-    let mut body = res.text().await.wrap_err("Failed to get body")?;
+    let body = res.text().await.wrap_err("Failed to get body")?;
 
     let (cow, _, _) = WINDOWS_1252.decode(body.as_bytes());
 
@@ -29,25 +27,24 @@ async fn main() -> Result<()> {
 
     let mut body_lines_iter = body.lines();
     let _ = body_lines_iter.next();
-    let body = dbg!(
-        body_lines_iter
-            .map(|s| format!("{s}\n"))
-            .collect::<String>()
-    );
+    let body = body_lines_iter
+        .map(|s| format!("{s}\n"))
+        .collect::<String>();
 
     let mut csv_reader = csv::ReaderBuilder::new()
         .delimiter(b';')
         .has_headers(false)
         .from_reader(body.as_bytes());
 
-    for entry in csv_reader.deserialize::<WeatherDataEntry>() {
-        let entry_vals = entry.wrap_err("Failed to parse CSV data")?;
-        println!(
-            "Max Temp for location {id}: {t} °C",
-            id = entry_vals.location,
-            t = entry_vals.value
-        );
-    }
+    let location = weather_data::Location::Plz(8001);
 
+    let zh_entry = csv_reader
+        .deserialize::<WeatherDataEntry>()
+        .map(|e| e.unwrap())
+        .filter(|e| e.location == location.into())
+        .next()
+        .unwrap();
+
+    println!("Maximum temp for Zurich: {} °C", zh_entry.value);
     Ok(())
 }
