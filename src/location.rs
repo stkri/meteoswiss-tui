@@ -1,5 +1,4 @@
-use color_eyre::eyre::ContextCompat;
-use color_eyre::eyre::WrapErr;
+use color_eyre::eyre::{ContextCompat, WrapErr};
 use color_eyre::{Result, Section};
 use serde_json::Value;
 
@@ -7,6 +6,9 @@ use serde_json::Value;
 pub struct Location(pub u32);
 
 impl Location {
+    pub fn from_api_id(l: u32) -> Self {
+        Location(l / 100)
+    }
     pub fn get_api_id(self) -> u32 {
         self.0 * 100
     }
