@@ -17,7 +17,7 @@ pub fn url(param: Parameter, date: DateTime<Utc>) -> String {
 
 /// Build the url for the api access based on the requested parameter and date.
 pub fn url_today(param: Parameter) -> String {
-    url(param, Utc::now())
+    url(param, Utc::now() - chrono::TimeDelta::hours(2))
 }
 
 /// Meteoroligical Data Parameters provided by the MeteoSwiss API

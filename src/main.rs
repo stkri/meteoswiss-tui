@@ -1,6 +1,7 @@
 use crate::location::Location;
 use crate::weather_data::{Parameter, get_entries};
 use color_eyre::Result;
+use color_eyre::eyre::ContextCompat;
 use std::sync::LazyLock;
 
 mod location;
@@ -12,10 +13,15 @@ pub static API_CLI: LazyLock<reqwest::Client> = LazyLock::new(|| reqwest::Client
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let locations = vec![Location(6318), Location(8001), Location(1312)];
+    let locations = vec![
+        Location::new(6318).wrap_err("When making location")?,
+        Location::new(8001).wrap_err("When making location")?,
+        Location::new(1312).wrap_err("When making location")?,
+        Location::new(9485).wrap_err("When making location")?,
+    ];
 
     let param = Parameter::MaxAirTemperatureDailyLocal;
-    let entries = get_entries(param, &locations).await.unwrap();
+    let entries = get_entries(param, &locations).await?;
 
     for entry in entries {
         println!(
