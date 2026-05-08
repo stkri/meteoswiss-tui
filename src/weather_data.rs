@@ -3,7 +3,10 @@ use chrono::{DateTime, TimeZone, Utc};
 use color_eyre::eyre::{ContextCompat, WrapErr};
 use color_eyre::{Result, Section};
 use encoding_rs::WINDOWS_1252;
+use std::env;
 use std::fmt::Display;
+use std::fs;
+use std::path::PathBuf;
 
 /// Build the url for the api access based on the requested parameter and date.
 pub fn url(param: Parameter, date: DateTime<Utc>) -> String {
@@ -72,6 +75,7 @@ impl Display for Parameter {
 }
 
 impl Parameter {
+    /// Returns the 8 character key used by the API for the parameters
     fn api_key(self) -> &'static str {
         use Parameter as P;
         match self {
@@ -95,6 +99,7 @@ impl Parameter {
         }
     }
 
+    /// Returns the unit which is associated with a parameter.
     pub fn associated_unit(self) -> &'static str {
         use Parameter as P;
         match self {
@@ -117,15 +122,19 @@ impl Parameter {
     }
 }
 
+/// A singular forecast datapoint, which includes the value, the location, and the date.
 #[derive(Debug, serde::Deserialize, Clone, Copy)]
 pub struct WeatherDataEntry {
+    /// The API id for the location.
     pub location: u32,
     _location_type: u8,
     date: u64,
+    /// The forecast value
     pub value: f64,
 }
 
 impl WeatherDataEntry {
+    /// Get the date value for the entry
     pub fn date(&self) -> Result<DateTime<Utc>> {
         let mut date_val = self.date;
         let minute = date_val % 1_00;
@@ -150,6 +159,8 @@ impl WeatherDataEntry {
     }
 }
 
+/// Return a list of entries for the give locations.
+/// Fails if the location is invalid and/or no connection can be established.
 pub async fn get_entries(
     param: Parameter,
     locations: &[Location],
@@ -184,4 +195,29 @@ pub async fn get_entries(
         .map(|e| e.expect("Format of repsonse CSV should be valid"))
         .filter(|e| int_locations.contains(&e.location))
         .collect())
+}
+
+/// Create a directory in temp to store CSVs
+pub fn init_cache() -> Result<()> {
+    // Make sure any caches left over due to ungraceful quits aren't used.
+    // We can safely ignore this Result<()>
+    // If the function returns Ok(()), the function has successfully deleted the temp file.
+    // If it returns Err, the cache didn't exist to begin with.
+    let _ = clear_cache();
+
+    let mut dir = env::temp_dir();
+    dir.push("meteoswiss-tui");
+
+    fs::DirBuilder::new()
+        .recursive(true)
+        .create(&dir)
+        .wrap_err(format!("Error when creating cache at {}", dir.display()))
+}
+
+/// Clear any cache directory in temp
+pub fn clear_cache() -> Result<()> {
+    let mut dir = env::temp_dir();
+    dir.push("meteoswiss-tui");
+
+    fs::remove_dir_all(&dir).wrap_err(format!("Error when clearing cache at {}", dir.display()))
 }

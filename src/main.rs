@@ -13,6 +13,8 @@ pub static API_CLI: LazyLock<reqwest::Client> = LazyLock::new(|| reqwest::Client
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
+    weather_data::init_cache()?;
+
     let locations = vec![
         Location::new(6318).wrap_err("When making location")?,
         Location::new(8001).wrap_err("When making location")?,
@@ -33,5 +35,8 @@ async fn main() -> Result<()> {
             param.associated_unit()
         );
     }
+
+    weather_data::clear_cache()?;
+
     Ok(())
 }
