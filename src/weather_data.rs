@@ -184,12 +184,15 @@ pub async fn get_entries(
         .map(|s| format!("{s}\n"))
         .collect::<String>();
 
+
+
     let mut csv_reader = csv::ReaderBuilder::new()
         .delimiter(b';')
         .has_headers(false)
         .from_reader(body.as_bytes());
 
     let int_locations = locations.iter().map(|l| l.get_api_id()).collect::<Vec<_>>();
+
     Ok(csv_reader
         .deserialize::<WeatherDataEntry>()
         .map(|e| e.expect("Format of repsonse CSV should be valid"))
@@ -220,4 +223,13 @@ pub fn clear_cache() -> Result<()> {
     dir.push("meteoswiss-tui");
 
     fs::remove_dir_all(&dir).wrap_err(format!("Error when clearing cache at {}", dir.display()))
+}
+
+/// Write a csv to cache 
+fn write_to_cache(csv: &str, param: &Parameter) -> Result<()> {
+    let time_fmt = Utc::now() - chrono::TimeDelta::hours(2).format("%Y%m%d%H")
+    let mut dir = env::temp_dir();
+    dir.push("meteoswiss-tui/");
+
+    todo!();
 }
